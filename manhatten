@@ -1,0 +1,206 @@
+import heapq
+
+
+
+def print_puzzle(state):
+    for i in range(0, 9, 3):
+        print(" ".join("_" if x == 0 else str(x) for x in state[i:i+3]))
+    print()
+
+
+
+def manhattan_distance(state, goal):
+
+    distance = 0
+
+    for i in range(9):
+
+        tile = state[i]
+
+        if tile == 0:
+            continue
+
+       
+        current_row = i // 3
+        current_col = i % 3
+
+       
+        goal_position = goal.index(tile)
+
+        goal_row = goal_position // 3
+        goal_col = goal_position % 3
+
+        # Manhattan distance
+        distance += abs(current_row - goal_row)
+        distance += abs(current_col - goal_col)
+
+    return distance
+
+
+
+def get_neighbors(state):
+
+    neighbors = []
+
+    blank = state.index(0)
+
+    row = blank // 3
+    col = blank % 3
+
+  
+    if row > 0:
+        new_state = list(state)
+        new_state[blank], new_state[blank - 3] = \
+            new_state[blank - 3], new_state[blank]
+        neighbors.append(tuple(new_state))
+
+   
+    if row < 2:
+        new_state = list(state)
+        new_state[blank], new_state[blank + 3] = \
+            new_state[blank + 3], new_state[blank]
+        neighbors.append(tuple(new_state))
+
+  
+    if col > 0:
+        new_state = list(state)
+        new_state[blank], new_state[blank - 1] = \
+            new_state[blank - 1], new_state[blank]
+        neighbors.append(tuple(new_state))
+
+   
+    if col < 2:
+        new_state = list(state)
+        new_state[blank], new_state[blank + 1] = \
+            new_state[blank + 1], new_state[blank]
+        neighbors.append(tuple(new_state))
+
+    return neighbors
+
+
+
+def a_star(initial, goal):
+
+   
+    open_list = []
+
+    h = manhattan_distance(initial, goal)
+
+    heapq.heappush(open_list, (h, 0, initial))
+
+   
+    g_cost = {initial: 0}
+
+   
+    parent = {initial: None}
+
+    visited = set()
+
+    while open_list:
+
+        f, g, current = heapq.heappop(open_list)
+
+        if current in visited:
+            continue
+
+        visited.add(current)
+
+      
+        if current == goal:
+
+            path = []
+
+            while current is not None:
+                path.append(current)
+                current = parent[current]
+
+            path.reverse()
+
+            return path
+
+        
+        for neighbor in get_neighbors(current):
+
+            new_g = g + 1
+
+            if neighbor not in g_cost or new_g < g_cost[neighbor]:
+
+                g_cost[neighbor] = new_g
+
+                h = manhattan_distance(neighbor, goal)
+
+                f = new_g + h
+
+                parent[neighbor] = current
+
+                heapq.heappush(
+                    open_list,
+                    (f, new_g, neighbor)
+                )
+
+    return None
+
+
+
+
+print("====================================")
+print("  8-PUZZLE A* SEARCH")
+print("  HEURISTIC: MANHATTAN DISTANCE")
+print("====================================")
+
+print("\nUse 0 for the blank space.")
+print("Example: 2 8 3 1 6 4 7 0 5")
+
+
+initial = tuple(
+    map(int, input("\nEnter initial state: ").split())
+)
+
+
+goal = tuple(
+    map(int, input("Enter goal state: ").split())
+)
+
+
+if len(initial) != 9 or len(goal) != 9:
+    print("Error: Enter exactly 9 numbers.")
+    exit()
+
+if set(initial) != set(range(9)) or set(goal) != set(range(9)):
+    print("Error: Use numbers 0 to 8 exactly once.")
+    exit()
+
+
+print("\nSearching...")
+print("Heuristic = Manhattan Distance")
+print("f(n) = g(n) + h(n)\n")
+
+
+solution = a_star(initial, goal)
+
+
+
+if solution is None:
+
+    print("No solution found.")
+
+else:
+
+    print("========== SOLUTION ==========")
+    print("Number of moves:", len(solution) - 1)
+    print()
+
+    for step, state in enumerate(solution):
+
+        g = step
+        h = manhattan_distance(state, goal)
+        f = g + h
+
+        print("Step:", step)
+        print("g(n) =", g)
+        print("h(n) =", h)
+        print("f(n) =", f)
+
+        print_puzzle(state)
+
+    print("========== GOAL REACHED ==========")
